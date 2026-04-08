@@ -4,6 +4,23 @@ Este projeto demonstra um sistema de **RAG (Retrieval-Augmented Generation)** ro
 
 ---
 
+# 🧠 O que é RAG
+
+RAG (Retrieval-Augmented Generation) é uma abordagem que combina:
+
+- 🔎 **Busca (retrieval)** em documentos
+- 🤖 **Geração de resposta** por um modelo de IA
+
+Em vez da IA responder apenas com o que “sabe”, ela:
+
+1. Busca informações relevantes na documentação
+2. Usa esse conteúdo como contexto
+3. Gera uma resposta baseada nesses dados
+
+👉 Isso reduz alucinação e aumenta a confiabilidade.
+
+---
+
 # 💻 Ambiente
 
 - CPU: i7-13650HX  
@@ -45,21 +62,56 @@ Demonstração do impacto da temperatura:
 
 ---
 
-# 🧠 Fluxo do sistema
+# ⚙️ Como o sistema funciona
 
 1. Pergunta do usuário  
-2. Busca de contexto  
+2. Busca de contexto na documentação  
 3. Envio para modelo (LM Studio)  
 4. Validação (grounding)  
 5. Fallback (se necessário)  
 
 ---
 
+# 🧠 Explicação do projeto
+
+Este projeto foi desenvolvido em **Node.js** com o objetivo de mostrar que:
+
+> não é necessário utilizar IA paga para diversos cenários práticos.
+
+Ele funciona como um **chatbot de documentação**, onde:
+
+- os dados ficam locais
+- a busca é feita na própria documentação
+- o modelo ajuda a montar a resposta
+- o sistema garante segurança com fallback
+
+---
+
+# 📏 Regras de arquitetura
+
+## ✔ A IA não é a fonte única
+A aplicação controla o fluxo.  
+Se a IA falhar → entra fallback.
+
+## ✔ Contexto limpo
+Remove ruído (FAQ, palavras-chave, etc.) antes de enviar ao modelo.
+
+## ✔ Resposta validada
+A resposta precisa:
+- estar no contexto
+- ser útil
+- não ser inventada
+
+## ✔ Temperatura controlada
+Define estilo da resposta, não o conhecimento.
+
+---
+
 # 🤖 Modelos testados
 
-- qwen2.5-coder-0.5b-instruct ❌
-- qwen2.5-1.5b-instruct ⚠️
-- qwen2.5-3b-instruct ✅
+- qwen2.5-coder-0.5b-instruct - contém 0,5 bilhões de parâmetros ❌ (fraco, alucina)
+- qwen2.5-1.5b-instruct - contém 1,5 bilhões de parâmetros ⚠️ (médio)
+- qwen2.5-3b-instruct - contém 3 bilhões de parâmetros ✅ (melhor equilíbrio)
 
 ---
 
@@ -73,30 +125,58 @@ Demonstração do impacto da temperatura:
 
 ---
 
+# 💡 Ideia principal
+
+Este projeto prova que:
+
+✔ É possível rodar IA local  
+✔ Sem custo por requisição  
+✔ Sem depender de API externa  
+
+Casos ideais:
+
+- chatbot interno
+- documentação técnica
+- suporte interno
+- consulta de regras
+
+---
+
+# 🖥️ Requisitos por modelo
+
+### 0.5B
+- RAM: ~2GB
+- GPU: opcional
+
+### 1.5B
+- RAM: ~4GB
+- GPU: opcional
+
+### 3B
+- RAM: 4–8GB
+- GPU: recomendada (4GB VRAM)
+
+---
+
+# ☁️ Rodar em VPS
+
+Também é possível rodar em servidor:
+
+- VPS simples → modelos menores
+- VPS com GPU → modelo 3B
+- servidor dedicado → produção
+
+---
+
 # 🚀 Resultado
 
 ✔ Sistema confiável  
 ✔ Sem alucinação relevante  
 ✔ Respostas seguras  
+✔ Execução local  
 
 ---
 
 # 📁 Estrutura de imagens
 
 Coloque os prints em:
-
-```
-docs/images/
-```
-
-Arquivos usados:
-
-- tela_inicial.png  
-- consulta_fora_documentacao.png  
-- temperatura_ajustada.png  
-
----
-
-# 🧾 Conclusão
-
-Este projeto mostra que é possível rodar um RAG local confiável usando modelos leves com fallback seguro.
