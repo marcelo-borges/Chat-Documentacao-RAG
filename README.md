@@ -17,7 +17,7 @@ Este projeto demonstra um sistema de **RAG (Retrieval-Augmented Generation)** ro
 
 ## 🔹 Tela inicial
 
-![Tela inicial](docs/images/tela_inicial.png)
+![Tela inicial](images/tela_inicial.png)
 
 O sistema inicia com uma interface simples para interação com a documentação.
 
@@ -25,7 +25,7 @@ O sistema inicia com uma interface simples para interação com a documentação
 
 ## 🔹 Consulta fora da documentação
 
-![Consulta fora](docs/images/consulta_fora_documentacao.png)
+![Consulta fora](images/consulta_fora_documentacao.png)
 
 Quando a pergunta não existe na base:
 
@@ -36,7 +36,7 @@ Quando a pergunta não existe na base:
 
 ## 🔹 Temperatura ajustada
 
-![Temperatura](docs/images/temperatura_ajustada.png)
+![Temperatura](images/temperatura_ajustada.png)
 
 Demonstração do impacto da temperatura:
 
