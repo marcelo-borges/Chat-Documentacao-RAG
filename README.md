@@ -175,8 +175,3 @@ Também é possível rodar em servidor:
 ✔ Respostas seguras  
 ✔ Execução local  
 
----
-
-# 📁 Estrutura de imagens
-
-Coloque os prints em:
