@@ -51,13 +51,15 @@ Quando a pergunta não existe na base:
 
 ---
 
-## 🔹 Temperatura ajustada
+## 🔹 Temperatura ajustada ** Note que cada resposta mostra a temperatura usada **
+
 
 ![Temperatura](images/temperatura_ajustada.png)
 
 Demonstração do impacto da temperatura:
 
-- 🔹 Baixa temperatura → respostas mais precisas
+- 🔹 Baixa temperatura → respostas mais precisas e fiéis a documentação
+- 🔹 Média temperatura → respostas mais variáveis
 - 🔹 Alta temperatura → maior variação / fallback
 
 ---
@@ -68,13 +70,47 @@ Demonstração do impacto da temperatura:
 2. Busca de contexto na documentação  
 3. Envio para modelo (LM Studio)  
 4. Validação (grounding)  
-5. Fallback (se necessário)  
+5. Fallback (se necessário) 
+
+---
+
+🔁 O que o fallback faz no seu projeto
+
+Ele:
+
+Pega os trechos encontrados no retrieval
+Extrai as partes importantes (ex: definição, regras)
+Monta uma resposta segura
+
+Exemplo de fallback:
+Resposta:
+- Definição: Documento digital que acoberta a circulação...
+- Escopo: Emissão e validação junto à SEFAZ
+
+Fonte: 03-nfe-produtos.md#0
+
+👉 100% baseado na documentação
+👉 zero risco de alucinação
+
+🎯 Por que isso é importante?
+
+Sem fallback:
+
+❌ a IA pode errar
+❌ pode inventar coisa
+❌ pode responder vazio
+
+Com fallback:
+
+✔ sempre tem resposta
+✔ sempre correta
+✔ sempre baseada no conteúdo
 
 ---
 
 # 🧠 Explicação do projeto
 
-Este projeto foi desenvolvido em **Node.js** com o objetivo de mostrar que:
+Este projeto demonstra que:
 
 > não é necessário utilizar IA paga para diversos cenários práticos.
 
