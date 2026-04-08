@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocAssist - IA de Documentação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f111a;
+            --sidebar-bg: #1a1d2b;
+            --chat-bg: #141724;
+            --accent: #00d2ff;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: #e6edf3;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        .navbar {
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid #30363d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--chat-bg);
+            overflow: hidden;
+        }
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            scroll-behavior: smooth;
+        }
+        .message {
+            max-width: 85%;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message-user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #0d6efd, #00d2ff);
+            color: white;
+            border-bottom-right-radius: 0;
+            margin-left: auto;
+        }
+        .message-bot {
+            align-self: flex-start;
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-bottom-left-radius: 0;
+            width: 100%;
+        }
+        .sources {
+            font-size: 0.8rem;
+            margin-top: 0.8rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #3d444d;
+            color: #8b949e;
+        }
+        .input-area {
+            padding: 1.5rem;
+            background-color: var(--sidebar-bg);
+            border-top: 1px solid #30363d;
+        }
+        .input-group { max-width: 900px; margin: 0 auto; }
+        #question-input { background-color: #0d1117; border: 1px solid #30363d; color: white; }
+        #question-input:focus { border-color: var(--accent); box-shadow: 0 0 0 0.25rem rgba(0, 210, 255, 0.25); }
+        pre { background: #0d1117; padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px solid #30363d; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <span class="navbar-brand fw-bold text-info"><i class="bi bi-robot me-2"></i>DocAssist</span>
+            <div class="d-flex align-items-center">
+                <span id="status-badge" class="badge bg-secondary me-2">Verificando...</span>
+                <div class="d-flex align-items-center me-2" style="gap: 0.5rem;"><br>
+                    <span class="text-secondary small md-1">Temperatura</span><br>
+                    <input id="temp-range" type="range" min="0" max="0.9" step="0.05" value="0.3" style="width: 140px;">
+                    <span id="temp-value" class="badge bg-dark border border-secondary">0.30</span>
+                </div>
+                <button class="btn btn-sm btn-outline-light me-2" onclick="clearChat()"><i class="bi bi-trash3"></i></button>
+                <button class="btn btn-sm btn-outline-light" onclick="reindex()"><i class="bi bi-arrow-repeat"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="chat-area">
+        <div id="chat-messages" class="d-flex flex-column">
+            <div class="message message-bot">
+                Olá! Sou seu assistente de documentação. Como posso ajudar hoje?
+            </div>
+        </div>
+        <div class="input-area">
+            <form id="chat-form" class="input-group">
+                <input type="text" id="question-input" class="form-control" placeholder="Pergunte algo sobre a documentação..." required autocomplete="off">
+                <button class="btn btn-primary px-4" type="submit" id="send-btn"><i class="bi bi-send-fill"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const chatMessages = document.getElementById('chat-messages');
+        const questionInput = document.getElementById('question-input');
+        const statusBadge = document.getElementById('status-badge');
+        const tempRange = document.getElementById('temp-range');
+        const tempValue = document.getElementById('temp-value');
+        const initialBotMessage = 'Olá! Sou seu assistente de documentação. Como posso ajudar hoje?';
+
+        function setTemperatureValue(value) {
+            const n = Number(value);
+            const clamped = Number.isFinite(n) ? Math.max(0, Math.min(0.9, n)) : 0.3;
+            const formatted = clamped.toFixed(2);
+            tempRange.value = String(clamped);
+            tempValue.innerText = formatted;
+            localStorage.setItem('docassist_temperature', formatted);
+        }
+
+        function loadTemperatureValue() {
+            const saved = localStorage.getItem('docassist_temperature');
+            if (saved) setTemperatureValue(saved);
+        }
+
+        async function checkHealth() {
+            try {
+                const res = await fetch('/api/health');
+                const data = await res.json();
+                if (data.indexReady) {
+                    statusBadge.className = 'badge bg-success';
+                    statusBadge.innerText = `Online: ${data.totalChunks} trechos`;
+                } else if (data.indexing) {
+                    statusBadge.className = 'badge bg-warning text-dark';
+                    statusBadge.innerText = 'Indexando...';
+                }
+            } catch (e) { statusBadge.className = 'badge bg-danger'; statusBadge.innerText = 'Offline'; }
+        }
+
+        async function reindex() {
+            statusBadge.innerText = 'Reindexando...';
+            await fetch('/api/reindex', { method: 'POST' });
+            checkHealth();
+        }
+
+        function clearChat() {
+            chatMessages.innerHTML = '';
+            addMessage(initialBotMessage, false);
+        }
+
+        function addMessage(text, isUser, sources = [], temperature = null) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isUser ? 'message-user' : 'message-bot'}`;
+            
+            let content = isUser ? text : marked.parse(text);
+            if (!isUser) {
+                const rows = [];
+                if (Number.isFinite(Number(temperature))) {
+                    rows.push(`<div><strong>Temperatura:</strong> <span class="badge bg-dark border border-secondary">${Number(temperature).toFixed(2)}</span></div>`);
+                }
+                if (sources.length > 0) {
+                    const badges = sources.map(s => `<span class="badge rounded-pill bg-dark border border-secondary me-2">${s}</span>`).join(' ');
+                    rows.push(`<div><strong>Documentos:</strong><div class="mt-1">${badges}</div></div>`);
+                }
+                if (rows.length > 0) {
+                    content += `<div class="sources">${rows.join('')}</div>`;
+                }
+            }
+            
+            msgDiv.innerHTML = content;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            addMessage(question, true);
+            questionInput.value = '';
+            
+            const loading = document.createElement('div');
+            loading.className = 'message message-bot shadow-sm';
+            loading.innerHTML = '<div class="spinner-border spinner-border-sm text-info"></div> IA analisando as documentações...';
+            chatMessages.appendChild(loading);
+
+            try {
+                const temperature = Number(tempRange.value);
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, temperature })
+                });
+                
+                let data;
+                try { data = await res.json(); } catch(e) { data = { error: 'Resposta inválida do servidor' }; }
+
+                // Remove o loading de forma segura antes de qualquer outra ação
+                if (loading.parentNode) chatMessages.removeChild(loading);
+
+                if (!res.ok) {
+                    const errMsg = data.message || data.error || 'Falha no processamento';
+                    addMessage(`⚠️ **Erro no Servidor:** ${errMsg}`, false);
+                    return;
+                }
+                
+                addMessage(data.answer || '', false, data.sources, data.temperature);
+            } catch (e) {
+                if (loading.parentNode) chatMessages.removeChild(loading);
+                addMessage('Erro de conexão com o servidor.', false);
+            }
+        };
+        tempRange.addEventListener('input', (e) => setTemperatureValue(e.target.value));
+        loadTemperatureValue();
+        setInterval(checkHealth, 10000); checkHealth();
+    </script>
+</body>
+</html>
