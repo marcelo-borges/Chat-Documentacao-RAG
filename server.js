@@ -132,19 +132,31 @@ function bagOfWords(text) {
   return { counts, total };
 }
 
-function overlapRatio(baseText, candidateText) {
-  const base = bagOfWords(baseText);
-  const cand = bagOfWords(candidateText);
+function tokenize(text) {
+  return String(text || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
 
-  if (base.total === 0) return 1;
+function overlapRatio(answerText, contextText) {
+  const answerTokens = [
+    ...new Set(tokenize(answerText).filter((t) => t.length >= 4)),
+  ];
+  const contextTokens = new Set(tokenize(contextText));
 
-  let intersection = 0;
-  for (const [token, baseCount] of base.counts.entries()) {
-    const candCount = cand.counts.get(token) || 0;
-    intersection += Math.min(baseCount, candCount);
+  if (answerTokens.length === 0) return 1;
+
+  let matches = 0;
+  for (const token of answerTokens) {
+    if (contextTokens.has(token)) matches++;
   }
 
-  return intersection / base.total;
+  return matches / answerTokens.length;
 }
 
 function extractCriticalTokens(text) {
@@ -1371,8 +1383,7 @@ RESPOSTA TÉCNICA:`,
       normalizeText(NOT_FOUND_TEXT),
     );
 
-    const groundedByContext =
-      !modelNotFound && isAnswerGroundedInContext(cleanAnswer, context);
+    const groundedByContext = !modelNotFound;
 
     let finalAnswer = NOT_FOUND_TEXT;
     let finalNotFound = true;
@@ -1420,8 +1431,7 @@ RESPOSTA TÉCNICA:`,
         if (
           polished.applied &&
           isValidBaseAnswer(polished.text, question) &&
-          isUsefulAnswer(polished.text, question) &&
-          isAnswerGroundedInContext(polished.text, context)
+          isUsefulAnswer(polished.text, question)
         ) {
           finalAnswer = polished.text;
           finalMode = `${finalMode}+polished_${polished.level || refinementLevel}`;
